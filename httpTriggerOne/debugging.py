@@ -1,13 +1,18 @@
 import logging
 import mimetypes
 from suds.client import Client
-import azure.functions as func
+#import azure.functions as func
 import json
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+
+
+
+#def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req):
     logging.info('Python HTTP trigger function processed a request.')
     try:
-        req_body = req.get_json()
+        #req_body = req.get_json()
+        req_body = req
         logging.info("after: ")
         logging.info(req_body)
     except ValueError: #dont catch all error, specify the error to catch
@@ -26,7 +31,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if response:
             logging.info(type(response))
             logging.info(response)
-            returnJson = json.dumps(response, default=str)
+            #returnDict = Client.dict(response)
+            
+            #logging.info(returnDict)
+            returnDict = response
+            returnJson = json.dumps(returnDict, default=str)
             logging.info("Response: " + returnJson)
             return func.HttpResponse(returnJson, status_code = 201, mimetype="application/json")
             
@@ -77,4 +86,12 @@ def viesConnectionApprox(req_body):
     except Exception as e:
         # todo falls e eroror von Vies , dann entsprechend return
         logging.exception("error calling vies")
-        
+
+#the debugging part:
+import os
+script_dir = os.path.dirname(__file__)
+file_path = os.path.join(script_dir, 'sample.dat')
+with open(file_path) as file:
+    req = json.load(file)      
+main(req)
+#end debugging.
