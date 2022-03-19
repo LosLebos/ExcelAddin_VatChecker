@@ -5,6 +5,7 @@ import azure.functions as func
 import json
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    #the httpRequest is just a string containing and Arraay with many JSons. Actually should be one big json 
     logging.info('Python HTTP trigger function processed a request.')
     try:
         req_body = req.get_json()
@@ -20,6 +21,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     i = 0
     response = []
     for x in req_body:
+        logging.info(x)
         response.append(viesConnectionApprox(x))
 
     try:
@@ -43,7 +45,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 def viesConnectionApprox(req_body):
     #define all the parameters from the json Post
     try:
-        keys = req_body.keys()
+        #keys = req_body.keys()
         vatID = req_body['vatID']
         vatNumber = vatID[2:]
         countryCode = vatID[:2]
