@@ -6,6 +6,7 @@ import json
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     #the httpRequest is just a string containing and Arraay with many JSons. Actually should be one big json 
+    logger= logging.getLogger(__name__)
     logging.info('Python HTTP trigger function processed a request.')
     try:
         req_body = req.get_json()
@@ -21,8 +22,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     i = 0
     response = []
     for x in req_body:
-        logging.info(x)
-        response.append(viesConnectionApprox(x))
+        response.append(viesConnectionApprox(json.loads(x))) #dont really know why this works. before it is a dict, and i get error "keys must be integers"
 
     try:
         if response:
