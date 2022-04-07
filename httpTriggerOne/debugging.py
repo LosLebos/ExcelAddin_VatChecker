@@ -9,9 +9,10 @@ import json
 
 #def main(req: func.HttpRequest) -> func.HttpResponse:
 def main(req):
+    #the httpRequest is just a string containing and Arraay with many JSon Strings. Actually should be one big json string with sub categories, but whatever
+    logger= logging.getLogger(__name__)
     logging.info('Python HTTP trigger function processed a request.')
     try:
-        #req_body = req.get_json()
         req_body = req
         logging.info("after: ")
         logging.info(req_body)
@@ -22,20 +23,23 @@ def main(req):
         logging.error("Failed in init process!")
         logging.error(e)
 
-    i = 0
+    #check validity of requesterVAtID
+    if req_body[0]['requestervatID'] != '':
+        if not req_body[0]['requestervatID'].isalpha():
+            return func.HttpResponse(
+                f"Invalid requester Vatid. Requester ID must begin with two letters for country code",
+                status_code=203
+            )
+
     response = []
     for x in req_body:
-        response.append(viesConnectionApprox(x))
+        response.append(viesConnectionApprox(json.loads(x))) #json.loads converts the JSON String into a Python dict # mainprocess
 
     try:
         if response:
             logging.info(type(response))
             logging.info(response)
-            #returnDict = Client.dict(response)
-            
-            #logging.info(returnDict)
-            returnDict = response
-            returnJson = json.dumps(returnDict, default=str)
+            returnJson = json.dumps(response, default=str)
             logging.info("Response: " + returnJson)
             return func.HttpResponse(returnJson, status_code = 201, mimetype="application/json")
             
@@ -52,7 +56,7 @@ def main(req):
 def viesConnectionApprox(req_body):
     #define all the parameters from the json Post
     try:
-        keys = req_body.keys()
+        #keys = req_body.keys()
         vatID = req_body['vatID']
         vatNumber = vatID[2:]
         countryCode = vatID[:2]
@@ -67,13 +71,8 @@ def viesConnectionApprox(req_body):
     except Exception as e:
         logging.exception("after the dict auseinander")
         return e
-    #check validity of request
-    if requesterCountryCode != '':
-        if not requesterCountryCode.isalpha():
-            return "Invalid requester Vatid. Requester ID must begin with country code "
-    if countryCode != '':
-        if not countryCode.isalpha():
-            return "Invalid Vatid. Searched Vat ID must begin with country code"
+    
+            
 
     #call the vies api
     try:
@@ -84,8 +83,18 @@ def viesConnectionApprox(req_body):
         response = Client.dict(response)
         return response
     except Exception as e:
-        # todo falls e eroror von Vies , dann entsprechend return
-        logging.exception("error calling vies")
+        # todo falls e error von Vies , dann entsprechend return
+        return {
+            "countryCode": "",
+            "requestDate": "",
+            "requestIdentifier": "",
+            "traderAddress": "",
+            "traderCompanyType": "",
+            "traderName": "",
+            "valid": False,
+            "vatNumber": vatNumber,
+            "comment": "Calling the VIES API Failed: " + e
+            }
 
 #the debugging part:
 import os

@@ -2,6 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "ExcelAddin_VatChecker:httpTriggerOne/__init__.main (python3.8)",
+            "invokeTarget": {
+                "target": "code",
+                "projectRoot": "${workspaceFolder}/",
+                "lambdaHandler": "httpTriggerOne/__init__.main"
+            },
+            "lambda": {
+                "runtime": "python3.8",
+                "payload": {},
+                "environmentVariables": {}
+            }
+        },
+        {
             "name": "Attach to Python Functions",
             "type": "python",
             "request": "attach",

@@ -21,15 +21,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     #check validity of requesterVAtID
     if req_body[0]['requestervatID'] != '':
-        if not req_body[0]['requestervatID'].isalpha():
+        if not req_body[0]['requestervatID'][:2].isalpha():
             return func.HttpResponse(
                 f"Invalid requester Vatid. Requester ID must begin with two letters for country code",
-                status_code=203
-            )
+                status_code=400
+            ) 
+        else:
+            checkTheRequesterVatID = viesConnectionApprox(req_body[0])
+            if checkTheRequesterVatID == "Server raised fault: 'Invalid Requester member state'" or checkTheRequesterVatID == "Server raised fault: 'INVALID_REQUESTER_INFO'":
+                return func.HttpResponse(
+                    f"Invalid requester Vatid. VIES raised error: Requester VAT ID is not valid.",
+                    status_code=400
+                ) 
+        
 
     response = []
     for x in req_body:
-        response.append(viesConnectionApprox(json.loads(x))) #json.loads converts the JSON String into a Python dict # mainprocess
+        response.append(viesConnectionApprox(x))#json.loads(x))) #json.loads converts the JSON String into a Python dict # mainprocess
 
     try:
         if response:
@@ -37,12 +45,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             logging.info(response)
             returnJson = json.dumps(response, default=str)
             logging.info("Response: " + returnJson)
-            return func.HttpResponse(returnJson, status_code = 201, mimetype="application/json")
+            return func.HttpResponse(returnJson, status_code = 200, mimetype="application/json")
             
         else:
             return func.HttpResponse(
                 f"Something went wrong with the execution. Contact System Developer.",
-                status_code=202
+                status_code=500
             )
     except Exception as e:
         logging.exception("myError")
@@ -68,19 +76,6 @@ def viesConnectionApprox(req_body):
         logging.exception("after the dict auseinander")
         return e
     
-    if countryCode != '':
-        if not countryCode.isalpha():
-            return {
-            "countryCode": "",
-            "requestDate": "",
-            "requestIdentifier": "",
-            "traderAddress": "",
-            "traderCompanyType": "",
-            "traderName": "",
-            "valid": False,
-            "vatNumber": vatNumber,
-            "comment": "Invalid Vatid. Searched Vat ID must begin with two letters as a country code"
-            }
             
 
     #call the vies api
@@ -92,7 +87,9 @@ def viesConnectionApprox(req_body):
         response = Client.dict(response)
         return response
     except Exception as e:
-        # todo falls e error von Vies , dann entsprechend return
+        if str(e) == "Server raised fault: 'Invalid Requester member state'" or str(e) == "Server raised fault: 'INVALID_REQUESTER_INFO'":
+            return str(e)
+        #andere Errors returnen JSON
         return {
             "countryCode": "",
             "requestDate": "",
@@ -102,6 +99,6 @@ def viesConnectionApprox(req_body):
             "traderName": "",
             "valid": False,
             "vatNumber": vatNumber,
-            "comment": "Calling the VIES API Failed: " + e
+            "comment": "Calling the VIES API Failed: " + str(e)
             }
         
