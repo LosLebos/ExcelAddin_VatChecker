@@ -10,9 +10,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     try:
         req_body = req.get_json()
-        logging.info("after: ")
         logging.info(req_body)
-    except ValueError: #dont catch all error, specify the error to catch
+    except ValueError: 
         logging.info(ValueError)
         pass
     except Exception as e:
@@ -57,7 +56,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("customError", status_code=502)
         
 
-def viesConnectionApprox(req_body):
+def viesConnectionApprox(req_body): #Expects one line, with one VAT ID
     #define all the parameters from the json Post
     try:
         #keys = req_body.keys()
@@ -78,13 +77,14 @@ def viesConnectionApprox(req_body):
     
             
 
-    #call the vies api
+    #call the vies SOAP API
     try:
         url="https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl"
-        client = Client(url)
+        client = Client(url) # suds.Client
         logging.info(countryCode +vatNumber + traderName + traderCompanyType + traderStreet +  traderPostcode + traderCity + requesterCountryCode + requesterVatNumber)
         response = client.service.checkVatApprox(countryCode,vatNumber, traderName, traderCompanyType, traderStreet,  traderPostcode, traderCity, requesterCountryCode, requesterVatNumber)
         response = Client.dict(response)
+        response["comment"] = getCountrySpecificComment(countryCode)
         return response
     except Exception as e:
         if str(e) == "Server raised fault: 'Invalid Requester member state'" or str(e) == "Server raised fault: 'INVALID_REQUESTER_INFO'":
@@ -101,4 +101,17 @@ def viesConnectionApprox(req_body):
             "vatNumber": vatNumber,
             "comment": "Calling the VIES API Failed: " + str(e)
             }
-        
+
+def getCountrySpecificComment(countryCode):
+    if countryCode.isalpha():
+        commentByCountry= {"DE": "Germany does not give Customer Addresses via VIES.",
+            "GB": "VIES has no data for britisch VAT IDs. Consider checking XI VAT Ids instead.",
+            "IT": ""} #TODO finisch this list
+        if commentByCountry[countryCode]
+            return commentByCountry[countryCode]
+        else:
+            return ""
+    else:
+        return "not valid country code"
+    
+    
